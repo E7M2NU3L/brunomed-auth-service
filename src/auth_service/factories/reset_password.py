@@ -28,7 +28,7 @@ class ResetPasswordFactory:
         )
 
         message = f"""
-            Dear {encoded.firstname},
+            Dear User,
 
             Your password for the BrunoMed Rehabilitation System has been successfully updated.
 

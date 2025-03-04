@@ -61,7 +61,6 @@ class RegisterFactory:
         user_data = Profile.objects.filter(
             email = self.email
         ).first()
-        print(user_data)
 
         if user_data is not None:
             raise ValueError(f"User with email {self.email} already exists.")
@@ -70,7 +69,6 @@ class RegisterFactory:
         hashedpassword = self.bcrypt_service.generate_hash(
             password=self.password
         )
-        print(hashedpassword)
         if hashedpassword == None:
             raise ValueError("Failed to hash password.")
         

@@ -130,14 +130,24 @@ STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS HEADERS CONFIGURATION
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Allow frontend (React, Vue, etc.)
-    "https://brunomed.vercel.app"  # Add production URL
+CORS_ORIGIN_WHITELIST = [
+    "http://localhost:5173", 
+    "https://brunomed.vercel.app"
 ]
 
 CORS_ALLOW_CREDENTIALS = True  # Allow cookies/auth headers in CORS requests
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-CORS_ALLOW_HEADERS = ["*"]
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 # DJANGO REST FRAMEWORK CONFIGURATION
 REST_FRAMEWORK = {

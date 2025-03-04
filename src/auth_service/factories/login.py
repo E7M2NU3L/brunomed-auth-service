@@ -20,8 +20,7 @@ class LoginFactory:
 
     def userLogin(self):
         user_data = Profile.objects.filter(email=self.email).first()
-        print("User profile: ", user_data)
-
+        
         if user_data is None:
             raise UserWarning('User not logged in, please register an account')
         
@@ -30,7 +29,6 @@ class LoginFactory:
             password=self.password,
             hash_value=userPassword
         )
-        print(checkPassword)
 
         if not checkPassword:
             raise UserWarning('Password Incorrect, Try again')
@@ -38,7 +36,6 @@ class LoginFactory:
         # Create a token using the user profile data
         token = self.jwt_service.genToken({"email": user_data.email, "id": user_data.id})
         
-        print(token)
         if token is None:
             raise PermissionError('Token is Invalid')
         

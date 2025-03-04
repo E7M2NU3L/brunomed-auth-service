@@ -7,8 +7,9 @@ from auth_service.factories.reset_password import ResetPasswordFactory
 from rest_framework.generics import RetrieveUpdateAPIView, RetrieveDestroyAPIView
 from auth_service.models import Profile
 from auth_service.serializers import ProfileSerializer
-from rest_framework.status import HTTP_200_OK
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from auth_service.services import jwt_service
+from auth_service.services import otp_service, mail_service
 
 # 1. Login User
 class LoginUser(APIView):
@@ -89,7 +90,6 @@ class RegisterUser(APIView):
             assistive_device=assistive_device
         )
         context = factory.register()
-        print(context)
 
         # result context
         context = {
@@ -145,7 +145,6 @@ class SendMail(APIView):
 class VerifyOtp(APIView):
     def post(self, request, format=None):
         otp = request.data.get('otp')
-        print(otp)
         if otp is None:
             raise ValueError('Invalid OTP')
         
@@ -159,9 +158,6 @@ class VerifyOtp(APIView):
         otp_from_cookie = request.COOKIES.get('otp')
         if otp_from_cookie is None:
             return Response({'status': False, 'message': 'OTP not found in cookies'}, status=400)
-        print(otp_from_cookie)
-
-        print(otp == otp_from_cookie)
         
         if otp_from_cookie != otp:
             return Response({'status': False, 'message': 'OTP is Incorrect'}, status=400)
@@ -173,7 +169,7 @@ class VerifyOtp(APIView):
 # Reset Password
 class PasswordReset(APIView):
     def post(self, request, format=None):
-        password = request.data.get('password')
+        password = request.data.get('newPassword')
         if password is None:
             raise ValueError('Invalid password')
         
@@ -187,7 +183,7 @@ class PasswordReset(APIView):
         if is_otp_verified == False or is_otp_verified == None:
             raise UserWarning('token is invalid, try again')
         
-        token = request.COOKIES.get('otp-token')
+        token = request.COOKIES.get('otp_token')
         if token == False or token == None:
             raise UserWarning('token is invalid, try again')
         
@@ -195,8 +191,7 @@ class PasswordReset(APIView):
         instance = ResetPasswordFactory(
             password, token
         )
-        result = instance.reset_password()
-        result['password'] = ""
+        instance.reset_password()
 
         return response
 
@@ -213,6 +208,75 @@ class Logout(APIView):
 
         return response
     
+class MFaSteStep1(APIView):
+    def post(self, request, *args, **kwargs):
+        token = request.COOKIES.get('auth-token')
+        if token is None:
+            raise ValueError('Token is not provided')
+        
+        instance = jwt_service.JwtService()
+        data = instance.verifyToken(
+            token=token
+        )
+        if data is None:
+            return Response({
+                    'error' : "Token is not valid, resulted in errors"
+                })
+
+        otp = otp_service.OtpService().generate_otp()
+        message = f"""
+        your otp is {otp}
+        """
+        mail_service.SendMailService(message=message, receiver=data.get('email')).send()
+        
+        data = {
+            'status' : True,
+            'message' : "Otp has been sent to your email address"
+        }    
+        response = Response(data)
+        response.set_cookie('mfa_otp', otp)
+        return response
+    
+class MfaSteStep2(APIView):
+    def post(self, request, *args, **kwargs):
+        token = request.COOKIES.get('auth-token')
+        if token is None:
+            raise ValueError('Token is not provided')
+        
+        instance = jwt_service.JwtService()
+        data = instance.verifyToken(
+            token=token
+        )
+        if data is None:
+            return Response({
+                    'error' : "Token is not valid, resulted in errors"
+                })
+    
+        otp = request.data.get('otp')
+        if otp is None:
+            return Response({
+                'error' : "Invalid otp"
+            }, status=HTTP_400_BAD_REQUEST)
+        
+        otp_from_browser = request.COOKIES.get('mfa_otp')
+        if otp_from_browser is None:
+            return Response({
+                'error' : "otp is not found in browser"
+            }, status=HTTP_400_BAD_REQUEST)
+        
+        Profile.objects.filter(
+            email=data.get('email')
+        ).update(mfa=True)
+        
+        # get the cookies
+        response = Response({
+            'status' : True,
+            'message' : 'Otp verified successfully'
+        })
+        response.delete_cookie('mfa_otp')
+        return response
+
+
 class UpdateProfile(RetrieveUpdateAPIView):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
@@ -233,6 +297,24 @@ class CurrentUser(APIView):
         data = instance.verifyToken(
             token=token
         )
-        print(data)
-        response = Response(data)
+        user_profile = Profile.objects.filter(
+            email=data.get("email")
+        ).first()
+        response = Response({
+            'token_encoded' : data,
+            'model': {
+                'firstname' : user_profile.firstname,
+                'lastname' : user_profile.lastname,
+                'email' : user_profile.email,
+                'phone' : user_profile.phone,
+                'state' : user_profile.state,
+                'address' : user_profile.address,
+                'gender' : user_profile.gender,
+                'age' : user_profile.age,
+                'country' : user_profile.country,
+                'bio' : user_profile.bio,
+                'assistive_device' : user_profile.assistive_device,
+                'mfa' : user_profile.mfa
+            }
+        })
         return response

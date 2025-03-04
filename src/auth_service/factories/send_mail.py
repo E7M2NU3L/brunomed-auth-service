@@ -49,5 +49,4 @@ class SendMailFactory:
             'status': True,
             'message': 'OTP sent successfully'
         }
-        print(context)
         return context

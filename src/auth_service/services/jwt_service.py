@@ -9,7 +9,6 @@ class JwtService:
     @staticmethod
     def genToken(payload : dict) -> str:
         secret = os.getenv('SECRET_KEY')
-        print(secret)
         token : str = jwt.encode(
             payload=payload,
             key=secret,
@@ -21,7 +20,6 @@ class JwtService:
     @staticmethod
     def verifyToken(token : str) -> dict:
         secret = os.getenv('SECRET_KEY')
-        print(secret)
         encoded : dict = jwt.decode(
             jwt=token,
             key=secret,

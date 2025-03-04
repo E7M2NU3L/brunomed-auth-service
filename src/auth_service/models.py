@@ -20,6 +20,10 @@ class Profile(models.Model):
     bio = models.TextField(blank=True, null=True)
     assistive_device = models.CharField(max_length=100, blank=True, null=True)
 
+    mfa = models.BooleanField(
+        default=False,
+    )
+
     date_joined = models.DateTimeField(auto_now_add=True)  # Automatically set on creation
     last_login = models.DateTimeField(auto_now=True)  # Update on every login
 

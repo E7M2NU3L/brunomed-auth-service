@@ -8,7 +8,9 @@ from auth_service.views import (
     Logout,
     CurrentUser, 
     UpdateProfile,
-    DeleteProfile
+    DeleteProfile,
+    MfaSteStep2,
+    MFaSteStep1
 )
 
 urlpatterns = [
@@ -21,4 +23,6 @@ urlpatterns = [
     path('current-user/', CurrentUser.as_view(), name='current_user'),
     path("update-user/<int:pk>/", UpdateProfile.as_view(), name='update_user'),
     path("delete-user/<int:pk>/", DeleteProfile.as_view(), name='delete_user'),
+    path('mfa-validate/', MFaSteStep1.as_view(), name="validate_user"),
+    path('mfa-verify/', MfaSteStep2.as_view(), name="verify_user"),
 ]
