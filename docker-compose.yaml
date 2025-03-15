@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: auth_service_brunomed
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src 
+    env_file:
+      - ./src/src/.env
